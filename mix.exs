@@ -5,7 +5,7 @@ defmodule GeoTasks.MixProject do
     [
       app: :geo_tasks,
       version: "0.1.0",
-      elixir: "~> 1.5",
+      elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix, :gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -29,7 +29,7 @@ defmodule GeoTasks.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:uuid, "~> 1.1"},
+      {:elixir_uuid, "~> 1.2"},
       {:logger_file_backend, "~> 0.0.10"},
       {:credo, "~> 1.0.5", only: [:dev, :test], runtime: false},
       {:retry, "~> 0.10.0"},

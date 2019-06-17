@@ -28,7 +28,17 @@ config :logger, :file_error,
   path: "logs/error.log",
   format: "\n$date $time $metadata[$level] $levelpad$message",
   level: :error
-  
+
 config :phoenix, :stacktrace_depth, 20
 
 config :phoenix, :plug_init_mode, :runtime
+
+config :geo_tasks,
+  mongo: [
+    name: :mongo,
+    url: "mongodb://localhost:27017/geo_tasks_dev?connectTimeoutMS=10000",
+    pool_size: 10,
+    pool_overflow: 5,
+    timeout: 20_000,
+    pool_timeout: 5_000
+  ]
