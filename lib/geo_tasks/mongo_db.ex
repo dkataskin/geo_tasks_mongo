@@ -5,7 +5,10 @@ defmodule GeoTasks.MongoDB do
   @topology :mongo
 
   def insert_one(collection, doc) do
-    Mongo.insert_one(@topology, collection, doc, @mongo_opts)
+    with {:ok, %Mongo.InsertOneResult{inserted_id: id}} <-
+           Mongo.insert_one(@topology, collection, doc, @mongo_opts) do
+      {:ok, id}
+    end
   end
 
   def insert_many(collection, docs, opts) do

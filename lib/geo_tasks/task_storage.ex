@@ -1,6 +1,8 @@
 defmodule GeoTasks.TaskStorage do
   @moduledoc false
 
+  import GeoTasks.MongoMapUtils, only: [map_id!: 2]
+
   alias GeoTasks.Task
   alias GeoTasks.MongoDB
 
@@ -36,7 +38,6 @@ defmodule GeoTasks.TaskStorage do
 
   defp map_to_db!(%Task{id: id, lon: lon, lat: lat} = task) do
     %{
-      "_id" => id,
       "external_id" => task.external_id,
       "location" => map_location_to_db!(lon, lat),
       "status" => task.status |> to_string(),
@@ -45,6 +46,7 @@ defmodule GeoTasks.TaskStorage do
       "assigned_at" => task.assigned_at,
       "completed_at" => task.completed_at
     }
+    |> map_id!(id)
   end
 
   defp map_from_db!(nil), do: nil

@@ -4,7 +4,7 @@ config :geo_tasks, GeoTasksWeb.Endpoint,
   http: [port: 4002],
   server: false
 
-config :logger, level: :info
+config :logger, level: :debug
 
 config :geo_tasks,
   mongo: [
