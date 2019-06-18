@@ -34,7 +34,8 @@ defmodule GeoTasks.UserStorage do
     end
   end
 
-  @spec add_access_token(BSON.ObjectId.t(), User.access_token()) :: {:ok, :added} | {:error, any()}
+  @spec add_access_token(BSON.ObjectId.t(), User.access_token()) ::
+          {:ok, :added} | {:error, any()}
   def add_access_token(%BSON.ObjectId{} = user_id, access_token) when is_binary(access_token) do
     filter = %{"_id" => user_id}
 
@@ -52,7 +53,8 @@ defmodule GeoTasks.UserStorage do
 
   @spec get_by_access_token(User.access_token()) :: single_user_result
   def get_by_access_token(access_token) when is_binary(access_token) do
-    with {:ok, user} <- MongoDB.find_one(@coll, %{"access_tokens" => access_token}, map_fn: &map_from_db/1) do
+    with {:ok, user} <-
+           MongoDB.find_one(@coll, %{"access_tokens" => access_token}, map_fn: &map_from_db/1) do
       {:ok, user}
     else
       error ->
