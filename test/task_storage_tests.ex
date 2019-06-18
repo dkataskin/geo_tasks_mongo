@@ -19,13 +19,14 @@ defmodule GeoTasks.TaskStorageTests do
     assert elem(result, 0) == :ok
   end
 
-  test "can read task" do
+  test "can read a task by external id" do
     task = TaskFactory.gen_new_task()
     {:ok, %Task{external_id: external_id} = task1} = TaskStorage.create_new(task)
 
     {:ok, task2} = TaskStorage.get_by_external_id(external_id)
 
-    assert task2 == task1
+    assert task2
+    assert task1 == task2
   end
 
   defp cleanup_data() do

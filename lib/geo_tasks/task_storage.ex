@@ -10,8 +10,11 @@ defmodule GeoTasks.TaskStorage do
 
   @coll "tasks"
 
+  @type singe_task_result :: {:ok, Task.t()} | {:error, any()}
+
+  @spec create_new(Task.t()) :: singe_task_result()
   def create_new(%Task{id: nil} = task) do
-    with {:ok, id} <- MongoDB.insert_one(@coll, map_to_db!(task)) do
+    with {:ok, id} <- MongoDB.insert_one(@coll, map_to_db(task)) do
       {:ok, %Task{task | id: id}}
     else
       error ->
@@ -20,9 +23,10 @@ defmodule GeoTasks.TaskStorage do
     end
   end
 
+  @spec get_by_external_id(String.t()) :: singe_task_result()
   def get_by_external_id(external_id) when is_binary(external_id) do
     with {:ok, task} <-
-           MongoDB.find_one(@coll, %{"external_id" => external_id}, map_fn: &map_from_db!/1) do
+           MongoDB.find_one(@coll, %{"external_id" => external_id}, map_fn: &map_from_db/1) do
       {:ok, task}
     else
       error ->
@@ -36,10 +40,11 @@ defmodule GeoTasks.TaskStorage do
     end
   end
 
-  defp map_to_db!(%Task{id: id, lon: lon, lat: lat} = task) do
+  @spec map_to_db(Task.t()) :: BSON.document()
+  defp map_to_db(%Task{id: id, location: location} = task) do
     %{
       "external_id" => task.external_id,
-      "location" => map_location_to_db!(lon, lat),
+      "location" => map_location_to_db(location),
       "status" => task.status |> to_string(),
       "assignee_id" => task.assignee_id,
       "created_at" => task.created_at,
@@ -49,16 +54,15 @@ defmodule GeoTasks.TaskStorage do
     |> map_id!(id)
   end
 
-  defp map_from_db!(nil), do: nil
+  @spec map_to_db(nil) :: nil
+  defp map_from_db(nil), do: nil
 
-  defp map_from_db!(%{"_id" => id, "location" => location} = doc) do
-    %{lon: lon, lat: lat} = map_location_from_db!(location)
-
+  @spec map_to_db(BSON.document()) :: Task.t()
+  defp map_from_db(%{"_id" => id, "location" => location} = doc) do
     %Task{
       id: id,
       external_id: doc["external_id"],
-      lon: lon,
-      lat: lat,
+      location: map_location_from_db(location),
       status: (doc["status"] || "created") |> String.to_atom(),
       assignee_id: doc["assignee_id"],
       created_at: doc["created_at"],
@@ -67,19 +71,22 @@ defmodule GeoTasks.TaskStorage do
     }
   end
 
-  defp map_location_to_db!(nil, _lat), do: nil
-  defp map_location_to_db!(_lon, nil), do: nil
+  @spec map_location_to_db(nil) :: nil
+  defp map_location_to_db(nil), do: nil
 
-  defp map_location_to_db!(lon, lat) do
+  @spec map_location_to_db(Task.location()) :: BSON.document()
+  defp map_location_to_db(%{lon: lon, lat: lat}) do
     %{
       "type" => "Point",
       "coordinates" => [lon, lat]
     }
   end
 
-  defp map_location_from_db!(nil), do: %{lon: nil, lat: nil}
+  @spec map_location_from_db(nil) :: nil
+  defp map_location_from_db(nil), do: nil
 
-  defp map_location_from_db!(%{"type" => "Point", "coordinates" => [lon, lat]}) do
+  @spec map_location_from_db(BSON.document()) :: Task.location()
+  defp map_location_from_db(%{"type" => "Point", "coordinates" => [lon, lat]}) do
     %{
       lon: lon,
       lat: lat

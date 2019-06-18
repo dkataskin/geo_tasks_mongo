@@ -1,9 +1,14 @@
 defmodule GeoTasks.MongoDB do
   @moduledoc false
 
+  @type result(t) :: :ok | {:ok, t} | {:error, Mongo.Error.t()} | {:error, any()}
+  @type id_result :: Mongo.result(BSON.ObjectId.t())
+  @type err_result :: {:error, Mongo.Error.t()} | {:error, any()}
+
   @mongo_opts [pool: DBConnection.Poolboy, pool_timeout: 5_000, timeout: 20_000]
   @topology :mongo
 
+  @spec insert_one(Mongo.collection(), BSON.document()) :: id_result | err_result
   def insert_one(collection, doc) do
     with {:ok, %Mongo.InsertOneResult{inserted_id: id}} <-
            Mongo.insert_one(@topology, collection, doc, @mongo_opts) do
@@ -11,10 +16,13 @@ defmodule GeoTasks.MongoDB do
     end
   end
 
+  @spec insert_many(Mongo.collection(), [BSON.document()], Keyword.t()) ::
+          result(Mongo.InsertManyResult.t())
   def insert_many(collection, docs, opts) do
     Mongo.insert_many(@topology, collection, docs, Keyword.merge(opts, @mongo_opts))
   end
 
+  @spec find_one(Mongo.collection(), BSON.document(), Keyword.t()) :: result(Map.t())
   def find_one(collection, filter, opts) do
     map_fn = opts[:map_fn] || fn db_item -> db_item end
 
@@ -29,6 +37,8 @@ defmodule GeoTasks.MongoDB do
     end
   end
 
+  @spec find_one_and_update(Mongo.collection(), Map.t(), Map.t(), Keyword.t()) ::
+          result(BSON.document())
   def find_one_and_update(collection, filter, update, opts \\ [return_document: :after]) do
     map_fn = opts[:map_fn] || fn db_item -> db_item end
 
@@ -44,6 +54,8 @@ defmodule GeoTasks.MongoDB do
     end
   end
 
+  @spec find_one_and_update(Mongo.collection(), Map.t(), BSON.document(), Keyword.t()) ::
+          result(BSON.document())
   def find_one_and_replace(collection, filter, doc, opts) do
     Mongo.find_one_and_replace(
       @topology,
