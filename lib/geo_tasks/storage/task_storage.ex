@@ -10,9 +10,9 @@ defmodule GeoTasks.TaskStorage do
 
   @coll "tasks"
 
-  @type singe_task_result :: {:ok, Task.t()} | {:error, any()}
+  @type single_task_result :: {:ok, nil} | {:ok, Task.t()} | {:error, any()}
 
-  @spec create_new(Task.t()) :: singe_task_result()
+  @spec create_new(Task.t()) :: single_task_result()
   def create_new(%Task{id: nil} = task) do
     with {:ok, id} <- MongoDB.insert_one(@coll, map_to_db(task)) do
       {:ok, %Task{task | id: id}}
@@ -23,7 +23,7 @@ defmodule GeoTasks.TaskStorage do
     end
   end
 
-  @spec get_by_external_id(String.t()) :: singe_task_result()
+  @spec get_by_external_id(String.t()) :: single_task_result()
   def get_by_external_id(external_id) when is_binary(external_id) do
     with {:ok, task} <-
            MongoDB.find_one(@coll, %{"external_id" => external_id}, map_fn: &map_from_db/1) do
@@ -40,14 +40,59 @@ defmodule GeoTasks.TaskStorage do
     end
   end
 
+  @spec update(Task.t(), Map.t()) :: single_task_result()
+  def update(%Task{id: id, ver: ver}, %{} = updates) do
+    filter = %{
+      "_id" => id,
+      "ver" => ver
+    }
+
+    update = %{
+      "$set" =>
+        updates
+        |> Enum.reduce(Map.new(), fn {key, value}, acc ->
+          acc |> Map.put(key |> to_string(), value)
+        end),
+      "$inc" => %{
+        "ver" => 1
+      }
+    }
+
+    opts = [map_fn: &map_from_db/1, return_document: :after]
+    MongoDB.find_one_and_update(@coll, filter, update, opts)
+  end
+
+  def set_status(%Task{} = task, :assigned, %BSON.ObjectId{} = user_id) do
+    updates = %{
+      status: :assigned,
+      assign_lock: user_id,
+      assignee_id: user_id,
+      assigned_at: task.assigned_at || DateTime.utc_now()
+    }
+
+    update(task, updates)
+  end
+
+  def set_status(%Task{} = task, :completed) do
+    updates = %{
+      status: :completed,
+      assign_lock: task.external_id,
+      completed_at: task.completed_at || DateTime.utc_now()
+    }
+
+    update(task, updates)
+  end
+
   @spec map_to_db(Task.t()) :: BSON.document()
-  defp map_to_db(%Task{id: id, location: location} = task) do
+  defp map_to_db(%Task{id: id, ver: ver, location: location} = task) do
     %{
       "external_id" => task.external_id,
+      "ver" => ver,
       "location" => map_location_to_db(location),
+      "assign_lock" => task.external_id,
       "status" => task.status |> to_string(),
       "assignee_id" => task.assignee_id,
-      "created_at" => task.created_at,
+      "created_at" => task.created_at || DateTime.utc_now(),
       "assigned_at" => task.assigned_at,
       "completed_at" => task.completed_at
     }
@@ -61,6 +106,7 @@ defmodule GeoTasks.TaskStorage do
   defp map_from_db(%{"_id" => id, "location" => location} = doc) do
     %Task{
       id: id,
+      ver: doc["ver"],
       external_id: doc["external_id"],
       location: map_location_from_db(location),
       status: (doc["status"] || "created") |> String.to_atom(),

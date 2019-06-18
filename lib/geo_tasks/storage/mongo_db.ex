@@ -54,7 +54,7 @@ defmodule GeoTasks.MongoDB do
     end
   end
 
-  @spec find_one_and_update(Mongo.collection(), Map.t(), BSON.document(), Keyword.t()) ::
+  @spec find_one_and_replace(Mongo.collection(), Map.t(), BSON.document(), Keyword.t()) ::
           result(BSON.document())
   def find_one_and_replace(collection, filter, doc, opts) do
     Mongo.find_one_and_replace(

@@ -4,6 +4,7 @@ defmodule GeoTasks.Task do
   @enforce_keys [:external_id, :location, :created_at]
 
   defstruct id: nil,
+            ver: 0,
             external_id: nil,
             location: nil,
             status: :created,
@@ -13,6 +14,7 @@ defmodule GeoTasks.Task do
             assigned_at: nil,
             completed_at: nil
 
+  @type external_id :: String.t()
   @type location :: %{
           lon: number(),
           lat: number()
@@ -22,7 +24,8 @@ defmodule GeoTasks.Task do
 
   @type t :: %__MODULE__{
           id: BSON.ObjectId.t(),
-          external_id: String.t(),
+          ver: non_neg_integer(),
+          external_id: external_id(),
           location: location(),
           status: task_status(),
           creator_id: BSON.ObjectId.t(),
