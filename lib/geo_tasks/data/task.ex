@@ -1,6 +1,8 @@
 defmodule GeoTasks.Task do
   @moduledoc false
 
+  @enforce_keys [:external_id, :location, :created_at]
+
   defstruct id: nil,
             external_id: nil,
             location: nil,
