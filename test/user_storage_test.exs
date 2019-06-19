@@ -8,7 +8,7 @@ defmodule GeoTasks.UserStorageTest do
   alias GeoTasks.TestDataFactory
   alias GeoTasks.AccessToken
 
-  def setup do
+  setup do
     cleanup_data()
 
     on_exit(&cleanup_data/0)

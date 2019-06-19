@@ -1,12 +1,13 @@
 defmodule GeoTasks.Task do
   @moduledoc false
 
-  @enforce_keys [:external_id, :location, :created_at]
+  @enforce_keys [:external_id, :pickup_loc, :delivery_loc, :created_at]
 
   defstruct id: nil,
             ver: 0,
             external_id: nil,
-            location: nil,
+            pickup_loc: nil,
+            delivery_loc: nil,
             status: :created,
             creator_id: nil,
             assignee_id: nil,
@@ -26,7 +27,8 @@ defmodule GeoTasks.Task do
           id: BSON.ObjectId.t(),
           ver: non_neg_integer(),
           external_id: external_id(),
-          location: location(),
+          pickup_loc: location(),
+          delivery_loc: location(),
           status: task_status(),
           creator_id: BSON.ObjectId.t(),
           assignee_id: nil | BSON.ObjectId.t(),

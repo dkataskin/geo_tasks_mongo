@@ -6,7 +6,7 @@ defmodule GeoTasks.TaskManagerTest do
   alias GeoTasks.TestDataFactory
   alias GeoTasks.UserStorage
 
-  def setup do
+  setup do
     cleanup_data()
 
     on_exit(&cleanup_data/0)
@@ -17,12 +17,14 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     assert task
     assert task.external_id
-    assert task.location == location
+    assert task.pickup_loc == pickup_loc
+    assert task.delivery_loc == delivery_loc
     assert task.status == :created
     assert task.creator_id == manager.id
   end
@@ -32,9 +34,11 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:driver)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    assert {:error, :not_authorized} == TaskManager.create_new_task(location, driver)
+    assert {:error, :not_authorized} ==
+             TaskManager.create_new_task(pickup_loc, delivery_loc, driver)
   end
 
   test "a driver can be assigned a task" do
@@ -46,9 +50,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     {:ok, assigned_task} = TaskManager.assign_task(task, driver)
     assert assigned_task
     assert assigned_task.id == task.id
@@ -62,9 +67,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     assert {:error, :not_authorized} == TaskManager.assign_task(task, manager)
   end
 
@@ -77,9 +83,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     {:ok, assigned_task1} = TaskManager.assign_task(task, driver)
     assert assigned_task1
     assert assigned_task1.id == task.id
@@ -106,9 +113,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     {:ok, assigned_task} = TaskManager.assign_task(task, driver1)
     assert {:error, :task_already_assigned} == TaskManager.assign_task(assigned_task, driver2)
   end
@@ -122,9 +130,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     {:ok, assigned_task} = TaskManager.assign_task(task, driver)
 
     assert {:error, :not_authorized} == TaskManager.complete_task(assigned_task, manager)
@@ -139,9 +148,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     {:ok, assigned_task} = TaskManager.assign_task(task, driver)
 
     {:ok, completed_task} = TaskManager.complete_task(assigned_task, driver)
@@ -159,9 +169,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     {:ok, assigned_task} = TaskManager.assign_task(task, driver)
     {:ok, completed_task1} = TaskManager.complete_task(assigned_task, driver)
     {:ok, completed_task2} = TaskManager.complete_task(completed_task1, driver)
@@ -177,9 +188,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     assert {:error, :invalid_task_status} == TaskManager.complete_task(task, driver)
   end
 
@@ -196,9 +208,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     {:ok, assigned_task} = TaskManager.assign_task(task, driver1)
 
     assert {:error, :not_authorized} == TaskManager.complete_task(assigned_task, driver2)
@@ -213,9 +226,10 @@ defmodule GeoTasks.TaskManagerTest do
       TestDataFactory.gen_new_user(:manager)
       |> UserStorage.create_new()
 
-    location = TestDataFactory.gen_location()
+    pickup_loc = TestDataFactory.gen_location()
+    delivery_loc = TestDataFactory.gen_location()
 
-    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, task} = TaskManager.create_new_task(pickup_loc, delivery_loc, manager)
     {:ok, assigned_task} = TaskManager.assign_task(task, driver)
     {:ok, completed_task} = TaskManager.complete_task(assigned_task, driver)
 

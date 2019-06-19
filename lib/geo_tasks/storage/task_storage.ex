@@ -23,6 +23,36 @@ defmodule GeoTasks.TaskStorage do
     end
   end
 
+  @spec list(Task.location(), pos_integer()) :: {:ok, [Task.t()]} | {:error, any()}
+  def list(%{lon: lon, lat: lat} = location, max_distance \\ nil) do
+    near_sphere =
+      %{
+        "$geometry" => %{
+          "type" => "Point",
+          "coordinates" => [lon, lat]
+        }
+      }
+      |> append_max_distance_limit(max_distance)
+
+    filter = %{
+      "status" => :created,
+      "location" => %{"$nearSphere" => near_sphere}
+    }
+
+    with {:error, reason} <- MongoDB.find(@coll, filter, map_fn: &map_from_db/1) do
+      Logger.error(
+        "(An error occurred while fetching tasks for location #{inspect(location)}, max distance: #{
+          inspect(max_distance)
+        }: #{inspect(reason)}"
+      )
+
+      {:error, reason}
+    else
+      list when is_list(list) ->
+        {:ok, list}
+    end
+  end
+
   @spec get_by_external_id(String.t()) :: single_task_result()
   def get_by_external_id(external_id) when is_binary(external_id) do
     with {:ok, task} <-
@@ -84,11 +114,12 @@ defmodule GeoTasks.TaskStorage do
   end
 
   @spec map_to_db(Task.t()) :: BSON.document()
-  defp map_to_db(%Task{id: id, ver: ver, location: location} = task) do
+  defp map_to_db(%Task{id: id, ver: ver} = task) do
     %{
       "external_id" => task.external_id,
       "ver" => ver,
-      "location" => map_location_to_db(location),
+      "pickup_loc" => map_location_to_db(task.pickup_loc),
+      "delivery_loc" => map_location_to_db(task.delivery_loc),
       "assign_lock" => task.external_id,
       "status" => task.status |> to_string(),
       "assignee_id" => task.assignee_id,
@@ -103,12 +134,13 @@ defmodule GeoTasks.TaskStorage do
   defp map_from_db(nil), do: nil
 
   @spec map_to_db(BSON.document()) :: Task.t()
-  defp map_from_db(%{"_id" => id, "location" => location} = doc) do
+  defp map_from_db(%{"_id" => id, "ver" => ver} = doc) do
     %Task{
       id: id,
-      ver: doc["ver"],
+      ver: ver,
       external_id: doc["external_id"],
-      location: map_location_from_db(location),
+      pickup_loc: map_location_from_db(doc["pickup_loc"]),
+      delivery_loc: map_location_from_db(doc["delivery_loc"]),
       status: (doc["status"] || "created") |> String.to_atom(),
       assignee_id: doc["assignee_id"],
       created_at: doc["created_at"],
@@ -137,5 +169,12 @@ defmodule GeoTasks.TaskStorage do
       lon: lon,
       lat: lat
     }
+  end
+
+  @spec append_max_distance_limit(BSON.document(), nil | pos_integer()) :: BSON.document()
+  defp append_max_distance_limit(query, nil), do: query
+
+  defp append_max_distance_limit(query, max_distance) do
+    query |> Map.put("$maxDistance", max_distance)
   end
 end

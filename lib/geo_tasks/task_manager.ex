@@ -4,11 +4,13 @@ defmodule GeoTasks.TaskManager do
   alias GeoTasks.{User, Task}
   alias GeoTasks.TaskStorage
 
-  @spec create_new_task(Task.location(), User.t()) ::
+  @default_max_distance 1_000
+
+  @spec create_new_task(Task.location(), Task.location(), User.t()) ::
           {:ok, Task.t()} | {:error, :not_authorized} | {:error, :any}
-  def create_new_task(%{lon: _lon, lat: _lat} = location, %User{} = creator) do
+  def create_new_task(%{} = pickup_loc, %{} = delivery_loc, %User{} = creator) do
     with {:authorized, true} <- {:authorized, is_allowed_create_tasks?(creator)},
-         task = new_task(location, creator),
+         task = new_task(pickup_loc, delivery_loc, creator),
          {:ok, %Task{} = task} <- TaskStorage.create_new(task) do
       {:ok, task}
     else
@@ -18,6 +20,11 @@ defmodule GeoTasks.TaskManager do
       error ->
         error
     end
+  end
+
+  @spec list_tasks(Task.location(), User.t()) :: {:ok, [Task.t()]}
+  def list_tasks(%{lon: _lon, lat: _lat} = location, max_distance \\ @default_max_distance) do
+    TaskStorage.list(location, max_distance)
   end
 
   @spec assign_task(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :task_already_assigned}
@@ -98,11 +105,12 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec new_task(Task.location(), User.t()) :: Task.t()
-  defp new_task(%{lon: _lon, lat: _lat} = location, %User{id: id}) do
+  @spec new_task(Task.location(), Task.location(), User.t()) :: Task.t()
+  defp new_task(%{} = pickup_loc, %{} = delivery_loc, %User{id: id}) do
     %Task{
       external_id: UUID.uuid1(),
-      location: location,
+      pickup_loc: pickup_loc,
+      delivery_loc: delivery_loc,
       status: :created,
       creator_id: id,
       created_at: DateTime.utc_now() |> DateTime.truncate(:millisecond)
