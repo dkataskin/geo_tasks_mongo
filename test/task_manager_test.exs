@@ -150,6 +150,78 @@ defmodule GeoTasks.TaskManagerTest do
     assert completed_task.completed_at
   end
 
+  test "the same driver can complete a task twice" do
+    {:ok, %User{} = driver} =
+      TestDataFactory.gen_new_user(:driver)
+      |> UserStorage.create_new()
+
+    {:ok, %User{} = manager} =
+      TestDataFactory.gen_new_user(:manager)
+      |> UserStorage.create_new()
+
+    location = TestDataFactory.gen_location()
+
+    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, assigned_task} = TaskManager.assign_task(task, driver)
+    {:ok, completed_task1} = TaskManager.complete_task(assigned_task, driver)
+    {:ok, completed_task2} = TaskManager.complete_task(completed_task1, driver)
+    assert completed_task1 == completed_task2
+  end
+
+  test "only task in status :assigned can be completed" do
+    {:ok, %User{} = driver} =
+      TestDataFactory.gen_new_user(:driver)
+      |> UserStorage.create_new()
+
+    {:ok, %User{} = manager} =
+      TestDataFactory.gen_new_user(:manager)
+      |> UserStorage.create_new()
+
+    location = TestDataFactory.gen_location()
+
+    {:ok, task} = TaskManager.create_new_task(location, manager)
+    assert {:error, :invalid_task_status} == TaskManager.complete_task(task, driver)
+  end
+
+  test "only assigned driver can complete a task" do
+    {:ok, %User{} = driver1} =
+      TestDataFactory.gen_new_user(:driver)
+      |> UserStorage.create_new()
+
+    {:ok, %User{} = driver2} =
+      TestDataFactory.gen_new_user(:driver)
+      |> UserStorage.create_new()
+
+    {:ok, %User{} = manager} =
+      TestDataFactory.gen_new_user(:manager)
+      |> UserStorage.create_new()
+
+    location = TestDataFactory.gen_location()
+
+    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, assigned_task} = TaskManager.assign_task(task, driver1)
+
+    assert {:error, :not_authorized} == TaskManager.complete_task(assigned_task, driver2)
+  end
+
+  test "completed task can't be reassigned" do
+    {:ok, %User{} = driver} =
+      TestDataFactory.gen_new_user(:driver)
+      |> UserStorage.create_new()
+
+    {:ok, %User{} = manager} =
+      TestDataFactory.gen_new_user(:manager)
+      |> UserStorage.create_new()
+
+    location = TestDataFactory.gen_location()
+
+    {:ok, task} = TaskManager.create_new_task(location, manager)
+    {:ok, assigned_task} = TaskManager.assign_task(task, driver)
+    {:ok, completed_task} = TaskManager.complete_task(assigned_task, driver)
+
+    assert {:error, :invalid_task_status} == TaskManager.assign_task(completed_task, driver)
+  end
+
   defp cleanup_data() do
     GeoTasks.MongoDB.delete_many("users", %{})
     GeoTasks.MongoDB.delete_many("tasks", %{})

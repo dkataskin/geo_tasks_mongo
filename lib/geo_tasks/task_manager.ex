@@ -39,12 +39,16 @@ defmodule GeoTasks.TaskManager do
           | {:error, :not_authorized}
           | {:error, :task_already_assigned}
           | {:error, any()}
-  def assign_task(%Task{status: :created} = task, %User{} = assignee) do
-    with {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
+  def assign_task(%Task{status: status} = task, %User{} = assignee) do
+    with {:status, :created} <- {:status, status},
+         {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
          {:ok, upd_task} <- TaskStorage.set_status(task, :assigned, assignee.id),
          {:task_updated, true} <- {:task_updated, not is_nil(upd_task)} do
       {:ok, upd_task}
     else
+      {:status, _status} ->
+        {:error, :invalid_task_status}
+
       {:authorized, false} ->
         {:error, :not_authorized}
 
@@ -56,10 +60,24 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
+  @spec complete_task(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :not_authorized}
+  def complete_task(%Task{status: :completed} = task, %User{} = assignee) do
+    with {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
+         {:same_assignee, true} <- {:same_assignee, task.assignee_id == assignee.id} do
+      {:ok, task}
+    else
+      {:authorized, false} ->
+        {:error, :not_authorized}
+
+      {:same_assignee, false} ->
+        {:error, :not_authorized}
+    end
+  end
+
   @spec complete_task(Task.t(), User.t()) ::
           {:ok, Task.t()} | {:error, :not_authorized} | {:error, any()}
-  def complete_task(%Task{} = task, %User{} = assignee) do
-    with {:status, :assigned} <- {:status, task.status},
+  def complete_task(%Task{status: status} = task, %User{} = assignee) do
+    with {:status, :assigned} <- {:status, status},
          {:authorized, true} <- {:authorized, is_allowed_complete_tasks?(assignee)},
          {:authorized, true} <- {:authorized, task.assignee_id === assignee.id},
          {:ok, upd_task} <- TaskStorage.set_status(task, :completed),
