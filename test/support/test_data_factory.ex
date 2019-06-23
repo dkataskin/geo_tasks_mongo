@@ -8,8 +8,8 @@ defmodule GeoTasks.TestDataFactory do
     %Task{
       id: nil,
       external_id: UUID.uuid1(),
-      pickup_loc: gen_location(),
-      delivery_loc: gen_location(),
+      pickup_loc: data |> Map.get(:pickup_loc, gen_location()),
+      delivery_loc: data |> Map.get(:delivery_loc, gen_location()),
       status: data |> Map.get(:status, :created),
       assignee_id: data |> Map.get(:assignee_id, nil),
       creator_id: data |> Map.get(:creator_id, nil),

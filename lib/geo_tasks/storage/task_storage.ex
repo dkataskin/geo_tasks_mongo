@@ -23,8 +23,9 @@ defmodule GeoTasks.TaskStorage do
     end
   end
 
-  @spec list(Task.location(), pos_integer()) :: {:ok, [Task.t()]} | {:error, any()}
-  def list(%{lon: lon, lat: lat} = location, max_distance \\ nil) do
+  @spec list(Task.location(), pos_integer(), pos_integer()) :: {:ok, [Task.t()]} | {:error, any()}
+  def list(%{lon: lon, lat: lat} = location, limit \\ 100, max_distance \\ nil)
+      when is_number(limit) and is_number(max_distance) do
     near_sphere =
       %{
         "$geometry" => %{
@@ -36,12 +37,16 @@ defmodule GeoTasks.TaskStorage do
 
     filter = %{
       "status" => :created,
-      "location" => %{"$nearSphere" => near_sphere}
+      "pickup_loc" => %{
+        "$nearSphere" => near_sphere
+      }
     }
 
-    with {:error, reason} <- MongoDB.find(@coll, filter, map_fn: &map_from_db/1) do
+    opts = [map_fn: &map_from_db/1, limit: limit]
+
+    with {:error, reason} <- MongoDB.find(@coll, filter, opts) do
       Logger.error(
-        "(An error occurred while fetching tasks for location #{inspect(location)}, max distance: #{
+        "An error occurred while fetching tasks for location #{inspect(location)}, max distance: #{
           inspect(max_distance)
         }: #{inspect(reason)}"
       )

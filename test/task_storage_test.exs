@@ -4,9 +4,8 @@ defmodule GeoTasks.TaskStorageTest do
   use ExUnit.Case
 
   alias GeoTasks.Task
-  alias GeoTasks.TaskStorage
-  alias GeoTasks.UserStorage
-  alias GeoTasks.TestDataFactory
+  alias GeoTasks.{TaskStorage, UserStorage, TestDataFactory}
+  alias GeoTasks.Haversine
 
   setup do
     cleanup_data()
@@ -69,6 +68,40 @@ defmodule GeoTasks.TaskStorageTest do
 
     assert task2
     assert task1 == task2
+  end
+
+  test "can list tasks by distance" do
+    task1 = TestDataFactory.gen_new_task(%{pickup_loc: %{lon: 18.060609, lat: 59.331695}})
+    {:ok, _} = TaskStorage.create_new(task1)
+
+    task2 = TestDataFactory.gen_new_task(%{pickup_loc: %{lon: 18.070824, lat: 59.331423}})
+    {:ok, _} = TaskStorage.create_new(task2)
+
+    task3 = TestDataFactory.gen_new_task(%{pickup_loc: %{lon: 18.054057, lat: 59.335047}})
+    {:ok, _} = TaskStorage.create_new(task3)
+
+    task4 = TestDataFactory.gen_new_task(%{pickup_loc: %{lon: 18.023261, lat: 59.328871}})
+    {:ok, _} = TaskStorage.create_new(task4)
+
+    driver_loc = %{lon: 18.068876, lat: 59.328025}
+    {:ok, tasks} = TaskStorage.list(driver_loc, 3, 10_000)
+
+    sort_check =
+      tasks
+      |> Enum.map(fn %Task{pickup_loc: pickup_loc} ->
+        Haversine.distance(driver_loc, pickup_loc)
+      end)
+      |> Enum.reduce_while({:ok, 0}, fn distance, {:ok, prev_distance} ->
+        if distance >= prev_distance do
+          {:cont, {:ok, distance}}
+        else
+          {:halt, {:error, :not_sorted}}
+        end
+      end)
+
+    assert Enum.count(tasks) == 3
+    assert elem(sort_check, 0) == :ok
+    assert elem(sort_check, 1) >= 0
   end
 
   defp cleanup_data() do

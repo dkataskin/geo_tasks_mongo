@@ -53,6 +53,9 @@ defmodule GeoTasks.TaskManager do
          {:task_updated, true} <- {:task_updated, not is_nil(upd_task)} do
       {:ok, upd_task}
     else
+      {:error, %Mongo.Error{code: 11_000}} ->
+        {:error, :too_many_assigned_tasks}
+
       {:status, _status} ->
         {:error, :invalid_task_status}
 
