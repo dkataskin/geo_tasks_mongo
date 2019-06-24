@@ -10,6 +10,6 @@ defmodule GeoTasksWeb.ErrorViewTest do
 
   test "renders 500.json" do
     assert render(GeoTasksWeb.ErrorView, "500.json", []) ==
-             %{errors: %{detail: "Internal Server Error"}}
+             %{success: false, errors: %{detail: "Internal Server Error"}}
   end
 end

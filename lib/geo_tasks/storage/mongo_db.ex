@@ -23,7 +23,7 @@ defmodule GeoTasks.MongoDB do
   end
 
   @spec find_one(Mongo.collection(), BSON.document(), Keyword.t()) :: result(Map.t())
-  def find_one(collection, filter, opts) do
+  def find_one(collection, filter, opts \\ []) do
     map_fn = opts[:map_fn] || fn db_item -> db_item end
 
     with %Mongo.Error{} = mongo_err <- Mongo.find_one(@topology, collection, filter, @mongo_opts) do
@@ -99,7 +99,7 @@ defmodule GeoTasks.MongoDB do
     Mongo.aggregate(@topology, collection, query, Keyword.merge(opts, @mongo_opts))
   end
 
-  def count(collection, filter, opts) do
+  def count(collection, filter, opts \\ []) do
     Mongo.count(@topology, collection, filter, Keyword.merge(opts, @mongo_opts))
   end
 

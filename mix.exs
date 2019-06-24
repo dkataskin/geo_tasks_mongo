@@ -16,7 +16,7 @@ defmodule GeoTasks.MixProject do
   def application do
     [
       mod: {GeoTasks.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :phoenix_ecto]
     ]
   end
 
@@ -33,7 +33,8 @@ defmodule GeoTasks.MixProject do
       {:logger_file_backend, "~> 0.0.10"},
       {:credo, "~> 1.0.5", only: [:dev, :test], runtime: false},
       {:retry, "~> 0.10.0"},
-      {:mongodb, "~> 0.5.1"}
+      {:mongodb, "~> 0.5.1"},
+      {:phoenix_ecto, "~> 4.0"}
     ]
   end
 end

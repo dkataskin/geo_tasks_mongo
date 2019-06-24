@@ -1,7 +1,7 @@
 defmodule GeoTasks.User do
   @moduledoc false
 
-  @enforce_keys [:name, :role, :created_at]
+  @enforce_keys [:name, :role]
 
   defstruct id: nil,
             name: nil,

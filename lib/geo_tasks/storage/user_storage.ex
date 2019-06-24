@@ -63,12 +63,43 @@ defmodule GeoTasks.UserStorage do
     end
   end
 
+  @spec get_random(User.role()) :: single_user_result
+  def get_random(role) do
+    with {:ok, count} <- MongoDB.count(@coll, %{"role" => role}),
+         true <- count > 0,
+         skip = :rand.uniform(count - 1),
+         [%User{} = user] <-
+           MongoDB.find(@coll, %{"role" => role}, limit: 1, skip: skip, map_fn: &map_from_db/1) do
+      {:ok, user}
+    else
+      false ->
+        {:ok, nil}
+
+      error ->
+        error
+    end
+  end
+
+  @spec get_access_tokens(BSON.ObjectId.t()) :: {:ok, [String.t()]} | {:error, any()}
+  def get_access_tokens(%BSON.ObjectId{} = user_id) do
+    with {:ok, user_db} <- MongoDB.find_one(@coll, %{"_id" => user_id}),
+         false <- is_nil(user_db) do
+      {:ok, user_db |> Map.get("access_tokens", [])}
+    else
+      true ->
+        {:ok, []}
+
+      error ->
+        error
+    end
+  end
+
   @spec map_to_db(User.t()) :: BSON.document()
   defp map_to_db(%User{id: id, role: role, name: name, created_at: created_at}) do
     %{
       "name" => name,
       "role" => role,
-      "created_at" => created_at
+      "created_at" => created_at || DateTime.utc_now() |> DateTime.truncate(:millisecond)
     }
     |> map_id!(id)
   end
