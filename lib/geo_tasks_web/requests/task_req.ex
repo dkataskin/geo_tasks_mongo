@@ -1,4 +1,4 @@
-defmodule GeoTasksWeb.AssignTaskReq do
+defmodule GeoTasksWeb.TaskReq do
   @moduledoc false
 
   use GeoTasksWeb.Req, %{

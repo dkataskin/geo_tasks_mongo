@@ -159,7 +159,7 @@ defmodule GeoTasks.TaskManagerTest do
 
     {:ok, assigned_task} = TaskManager.assign_task(task, driver1)
 
-    assert {:error, :not_authorized} == TaskManager.complete_task(assigned_task, driver2)
+    assert {:error, :wrong_assignee} == TaskManager.complete_task(assigned_task, driver2)
   end
 
   test "completed task can't be reassigned" do

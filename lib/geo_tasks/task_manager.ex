@@ -89,7 +89,7 @@ defmodule GeoTasks.TaskManager do
   def complete_task(%Task{status: status} = task, %User{} = assignee) do
     with {:status, :assigned} <- {:status, status},
          {:authorized, true} <- {:authorized, is_allowed_complete_tasks?(assignee)},
-         {:authorized, true} <- {:authorized, task.assignee_id === assignee.id},
+         {:assignee, true} <- {:assignee, task.assignee_id === assignee.id},
          {:ok, upd_task} <- TaskStorage.set_status(task, :completed),
          {:task_updated, true, _task} <- {:task_updated, not is_nil(upd_task), upd_task} do
       {:ok, upd_task}
@@ -99,6 +99,9 @@ defmodule GeoTasks.TaskManager do
 
       {:authorized, false} ->
         {:error, :not_authorized}
+
+      {:assignee, false} ->
+        {:error, :wrong_assignee}
 
       {:task_updated, false, task} ->
         {:ok, task}

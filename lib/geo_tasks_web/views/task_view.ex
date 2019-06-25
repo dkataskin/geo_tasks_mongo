@@ -13,11 +13,4 @@ defmodule GeoTasksWeb.TaskView do
       }
     }
   end
-
-  def render("errors.json", %{errors: errors}) do
-    %{
-      success: false,
-      errors: %{}
-    }
-  end
 end

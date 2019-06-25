@@ -1,4 +1,6 @@
 defmodule GeoTasksWeb.Req do
+  @moduledoc false
+
   defmacro __using__(schema) do
     quote do
       import Ecto.Changeset
