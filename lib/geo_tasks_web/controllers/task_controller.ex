@@ -1,8 +1,8 @@
 defmodule GeoTasksWeb.TaskController do
   use GeoTasksWeb, :controller
 
-  alias GeoTasks.{Task, TaskManager}
-  alias GeoTasksWeb.{CreateTaskReq, ErrorView}
+  alias GeoTasks.{Task, TaskManager, TaskStorage}
+  alias GeoTasksWeb.{CreateTaskReq, AssignTaskReq, ErrorView}
 
   require Logger
 
@@ -27,7 +27,40 @@ defmodule GeoTasksWeb.TaskController do
   end
 
   def assign(conn, params) do
-    render(conn, %{success: true, data: "test"})
+    with {:valid, req} <- AssignTaskReq.parse_validate(params),
+         {:ok, task} <- TaskStorage.get_by_external_id(req.task_id),
+         false <- is_nil(task),
+         {:ok, upd_task} <- TaskManager.assign_task(task, conn.assigns.user) do
+      render(conn, "task.json", task: upd_task)
+    else
+      true ->
+        conn
+        |> put_status(:not_found)
+        |> put_view(ErrorView)
+        |> render("404.json", errors: %{task_id: "task with specified id not found"})
+
+      {:error, :not_authorized} ->
+        conn
+        |> put_status(:forbidden)
+        |> put_view(ErrorView)
+        |> render("403.json", errors: make_authz_error(:driver, :assign))
+
+      {:error, :too_many_assigned_tasks} ->
+        conn
+        |> put_status(:bad_request)
+        |> put_view(ErrorView)
+        |> render("400.json", errors: %{task_id: "another task has been already assigned"})
+
+      {:error, :task_already_assigned} ->
+        conn
+        |> put_status(:bad_request)
+        |> put_view(ErrorView)
+        |> render("400.json", errors: %{task_id: "another driver picked up this task already"})
+
+      error ->
+        conn
+        |> handle_error(error)
+    end
   end
 
   def complete(conn, params) do

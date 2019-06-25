@@ -7,13 +7,6 @@ defmodule GeoTasksWeb.ErrorView do
   #   %{errors: %{detail: "Internal Server Error"}}
   # end
 
-  def render("403.json", %{errors: errors}) do
-    %{
-      success: false,
-      errors: errors
-    }
-  end
-
   def render("400.json", %{changeset: changeset}) do
     %{
       success: false,
@@ -21,12 +14,10 @@ defmodule GeoTasksWeb.ErrorView do
     }
   end
 
-  def render("400.json", %{errors: errors}) do
-    %{
-      success: false,
-      errors: errors
-    }
-  end
+  def render("403.json", %{errors: errors}), do: render_error(errors)
+
+  def render("400.json", %{errors: errors}), do: render_error(errors)
+  def render("404.json", %{errors: errors}), do: render_error(errors)
 
   def render("500.json", _assigns) do
     %{
@@ -40,5 +31,12 @@ defmodule GeoTasksWeb.ErrorView do
   # "Not Found".
   def template_not_found(template, _assigns) do
     %{errors: %{detail: Phoenix.Controller.status_message_from_template(template)}}
+  end
+
+  defp render_error(errors) do
+    %{
+      success: false,
+      errors: errors
+    }
   end
 end

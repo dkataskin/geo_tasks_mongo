@@ -16,8 +16,8 @@ defmodule GeoTasksWeb.Router do
 
       get "/tasks", TaskController, :list
       post "/tasks", TaskController, :create_new
-      post "/tasks/:external_task_id/assign", TaskController, :assign
-      post "/tasks/:external_task_id/complete", TaskController, :complete
+      post "/tasks/:task_id/assign", TaskController, :assign
+      post "/tasks/:task_id/complete", TaskController, :complete
     end
   end
 
