@@ -14,7 +14,9 @@ defmodule GeoTasksWeb.Router do
     scope "/v1" do
       pipe_through :api
 
+      get "/tasks/:task_id", TaskController, :get
       get "/tasks", TaskController, :list
+
       post "/tasks", TaskController, :create_new
       post "/tasks/:task_id/assign", TaskController, :assign
       post "/tasks/:task_id/complete", TaskController, :complete

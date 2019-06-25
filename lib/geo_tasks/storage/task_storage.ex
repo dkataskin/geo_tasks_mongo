@@ -24,7 +24,7 @@ defmodule GeoTasks.TaskStorage do
   end
 
   @spec list(Task.location(), pos_integer(), pos_integer()) :: {:ok, [Task.t()]} | {:error, any()}
-  def list(%{lon: lon, lat: lat} = location, limit \\ 100, max_distance \\ nil)
+  def list(%{lon: lon, lat: lat} = location, max_distance \\ nil, limit \\ 100)
       when is_number(limit) and is_number(max_distance) do
     near_sphere =
       %{

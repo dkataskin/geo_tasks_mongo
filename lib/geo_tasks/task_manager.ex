@@ -4,7 +4,8 @@ defmodule GeoTasks.TaskManager do
   alias GeoTasks.{User, Task}
   alias GeoTasks.TaskStorage
 
-  @default_max_distance 1_000
+  @default_max_distance 1_000_000
+  @default_limit 100
 
   @spec create_new_task(Task.location(), Task.location(), User.t()) ::
           {:ok, Task.t()} | {:error, :not_authorized} | {:error, :any}
@@ -22,9 +23,17 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec list_tasks(Task.location(), User.t()) :: {:ok, [Task.t()]}
-  def list_tasks(%{lon: _lon, lat: _lat} = location, max_distance \\ @default_max_distance) do
-    TaskStorage.list(location, max_distance)
+  @spec list_tasks(Task.location(), nil | pos_integer(), nil | pos_integer()) ::
+          {:ok, [Task.t()]} | {:error, any()}
+  def list_tasks(
+        %{lon: _lon, lat: _lat} = location,
+        max_distance \\ @default_max_distance,
+        limit \\ @default_limit
+      ) do
+    max_distance = max_distance || @default_max_distance
+    limit = limit || @default_limit
+
+    TaskStorage.list(location, max_distance, limit)
   end
 
   @spec assign_task(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :task_already_assigned}

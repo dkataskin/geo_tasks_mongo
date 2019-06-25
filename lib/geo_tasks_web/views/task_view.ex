@@ -1,6 +1,13 @@
 defmodule GeoTasksWeb.TaskView do
   use GeoTasksWeb, :view
 
+  def render("tasks.json", %{tasks: tasks}) when is_list(tasks) do
+    %{
+      success: true,
+      data: tasks |> Enum.map(&render("task.json", task: &1))
+    }
+  end
+
   def render("task.json", %{task: task}) do
     %{
       success: true,

@@ -2,9 +2,27 @@ defmodule GeoTasksWeb.TaskController do
   use GeoTasksWeb, :controller
 
   alias GeoTasks.{Task, TaskManager, TaskStorage}
-  alias GeoTasksWeb.{CreateTaskReq, TaskReq, ErrorView}
+  alias GeoTasksWeb.{CreateTaskReq, TaskReq, ListTasksReq, ErrorView}
 
   require Logger
+
+  def get(conn, params) do
+    with {:valid, req} <- TaskReq.parse_validate(params),
+         {:ok, task} <- TaskStorage.get_by_external_id(req.task_id),
+         false <- is_nil(task) do
+      render(conn, "task.json", task: task)
+    else
+      true ->
+        conn
+        |> put_status(:not_found)
+        |> put_view(ErrorView)
+        |> render("404.json", errors: %{task_id: "task with specified id not found"})
+
+      error ->
+        conn
+        |> handle_error(error)
+    end
+  end
 
   def create_new(conn, params) do
     with {:valid, req} <- CreateTaskReq.parse_validate(params),
@@ -104,8 +122,15 @@ defmodule GeoTasksWeb.TaskController do
     end
   end
 
-  def list(conn, _params) do
-    render(conn, %{success: true, data: "test"})
+  def list(conn, params) do
+    with {:valid, req} <- ListTasksReq.parse_validate(params),
+         {:ok, tasks} <- TaskManager.list_tasks(req.location, req.max_distance, req.limit) do
+      render(conn, "tasks.json", tasks: tasks)
+    else
+      error ->
+        conn
+        |> handle_error(error)
+    end
   end
 
   defp handle_error(conn, error) do

@@ -84,7 +84,7 @@ defmodule GeoTasks.TaskStorageTest do
     {:ok, _} = TaskStorage.create_new(task4)
 
     driver_loc = %{lon: 18.068876, lat: 59.328025}
-    {:ok, tasks} = TaskStorage.list(driver_loc, 3, 10_000)
+    {:ok, tasks} = TaskStorage.list(driver_loc, 10_000, 3)
 
     sort_check =
       tasks
