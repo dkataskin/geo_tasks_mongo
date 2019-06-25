@@ -7,9 +7,14 @@ defmodule GeoTasks.TaskManager do
   @default_max_distance 1_000_000
   @default_limit 100
 
-  @spec create_new_task(Task.location(), Task.location(), User.t()) ::
-          {:ok, Task.t()} | {:error, :not_authorized} | {:error, :any}
-  def create_new_task(%{} = pickup_loc, %{} = delivery_loc, %User{} = creator) do
+  @spec get(Task.external_id()) :: {:ok, nil} | {:ok, Task.t()} | {:error, any()}
+  def get(external_id) when is_binary(external_id) do
+    TaskStorage.get_by_external_id(external_id)
+  end
+
+  @spec create_new(Task.location(), Task.location(), User.t()) ::
+          {:ok, Task.t()} | {:error, :not_authorized} | {:error, any()}
+  def create_new(%{} = pickup_loc, %{} = delivery_loc, %User{} = creator) do
     with {:authorized, true} <- {:authorized, is_allowed_create_tasks?(creator)},
          task = new_task(pickup_loc, delivery_loc, creator),
          {:ok, %Task{} = task} <- TaskStorage.create_new(task) do
@@ -23,9 +28,9 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec list_tasks(Task.location(), nil | pos_integer(), nil | pos_integer()) ::
+  @spec list(Task.location(), nil | pos_integer(), nil | pos_integer()) ::
           {:ok, [Task.t()]} | {:error, any()}
-  def list_tasks(
+  def list(
         %{lon: _lon, lat: _lat} = location,
         max_distance \\ @default_max_distance,
         limit \\ @default_limit
@@ -36,8 +41,8 @@ defmodule GeoTasks.TaskManager do
     TaskStorage.list(location, max_distance, limit)
   end
 
-  @spec assign_task(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :task_already_assigned}
-  def assign_task(%Task{status: :assigned} = task, %User{} = assignee) do
+  @spec assign(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :task_already_assigned}
+  def assign(%Task{status: :assigned} = task, %User{} = assignee) do
     with {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
          {:same_assignee, true} <- {:same_assignee, task.assignee_id == assignee.id} do
       {:ok, task}
@@ -50,12 +55,12 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec assign_task(Task.t(), User.t()) ::
+  @spec assign(Task.t(), User.t()) ::
           {:ok, Task.t()}
           | {:error, :not_authorized}
           | {:error, :task_already_assigned}
           | {:error, any()}
-  def assign_task(%Task{status: status} = task, %User{} = assignee) do
+  def assign(%Task{status: status} = task, %User{} = assignee) do
     with {:status, :created} <- {:status, status},
          {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
          {:ok, upd_task} <- TaskStorage.set_status(task, :assigned, assignee.id),
@@ -79,8 +84,8 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec complete_task(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :not_authorized}
-  def complete_task(%Task{status: :completed} = task, %User{} = assignee) do
+  @spec complete(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :not_authorized}
+  def complete(%Task{status: :completed} = task, %User{} = assignee) do
     with {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
          {:same_assignee, true} <- {:same_assignee, task.assignee_id == assignee.id} do
       {:ok, task}
@@ -93,9 +98,9 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec complete_task(Task.t(), User.t()) ::
+  @spec complete(Task.t(), User.t()) ::
           {:ok, Task.t()} | {:error, :not_authorized} | {:error, any()}
-  def complete_task(%Task{status: status} = task, %User{} = assignee) do
+  def complete(%Task{status: status} = task, %User{} = assignee) do
     with {:status, :assigned} <- {:status, status},
          {:authorized, true} <- {:authorized, is_allowed_complete_tasks?(assignee)},
          {:assignee, true} <- {:assignee, task.assignee_id === assignee.id},

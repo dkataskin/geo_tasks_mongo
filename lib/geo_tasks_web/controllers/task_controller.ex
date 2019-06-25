@@ -1,14 +1,14 @@
 defmodule GeoTasksWeb.TaskController do
   use GeoTasksWeb, :controller
 
-  alias GeoTasks.{Task, TaskManager, TaskStorage}
+  alias GeoTasks.{Task, TaskManager}
   alias GeoTasksWeb.{CreateTaskReq, TaskReq, ListTasksReq, ErrorView}
 
   require Logger
 
   def get(conn, params) do
     with {:valid, req} <- TaskReq.parse_validate(params),
-         {:ok, task} <- TaskStorage.get_by_external_id(req.task_id),
+         {:ok, task} <- TaskManager.get(req.task_id),
          false <- is_nil(task) do
       render(conn, "task.json", task: task)
     else
@@ -27,7 +27,7 @@ defmodule GeoTasksWeb.TaskController do
   def create_new(conn, params) do
     with {:valid, req} <- CreateTaskReq.parse_validate(params),
          {:ok, %Task{} = task} <-
-           TaskManager.create_new_task(req.pickup, req.delivery, conn.assigns.user) do
+           TaskManager.create_new(req.pickup, req.delivery, conn.assigns.user) do
       conn
       |> put_status(:created)
       |> render("task.json", task: task)
@@ -46,9 +46,9 @@ defmodule GeoTasksWeb.TaskController do
 
   def assign(conn, params) do
     with {:valid, req} <- TaskReq.parse_validate(params),
-         {:ok, task} <- TaskStorage.get_by_external_id(req.task_id),
+         {:ok, task} <- TaskManager.get(req.task_id),
          false <- is_nil(task),
-         {:ok, upd_task} <- TaskManager.assign_task(task, conn.assigns.user) do
+         {:ok, upd_task} <- TaskManager.assign(task, conn.assigns.user) do
       render(conn, "task.json", task: upd_task)
     else
       true ->
@@ -83,9 +83,9 @@ defmodule GeoTasksWeb.TaskController do
 
   def complete(conn, params) do
     with {:valid, req} <- TaskReq.parse_validate(params),
-         {:ok, task} <- TaskStorage.get_by_external_id(req.task_id),
+         {:ok, task} <- TaskManager.get(req.task_id),
          false <- is_nil(task),
-         {:ok, upd_task} <- TaskManager.complete_task(task, conn.assigns.user) do
+         {:ok, upd_task} <- TaskManager.complete(task, conn.assigns.user) do
       render(conn, "task.json", task: upd_task)
     else
       true ->
@@ -124,7 +124,7 @@ defmodule GeoTasksWeb.TaskController do
 
   def list(conn, params) do
     with {:valid, req} <- ListTasksReq.parse_validate(params),
-         {:ok, tasks} <- TaskManager.list_tasks(req.location, req.max_distance, req.limit) do
+         {:ok, tasks} <- TaskManager.list(req.location, req.max_distance, req.limit) do
       render(conn, "tasks.json", tasks: tasks)
     else
       error ->
