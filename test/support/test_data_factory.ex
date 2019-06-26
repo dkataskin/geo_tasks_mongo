@@ -1,9 +1,9 @@
 defmodule GeoTasks.TestDataFactory do
   @moduledoc false
 
-  alias GeoTasks.Task
-  alias GeoTasks.User
+  alias GeoTasks.{Task, User}
 
+  @spec gen_new_task(Map.t()) :: Task.t()
   def gen_new_task(data \\ %{creator_id: nil, assignee_id: nil, status: :created}) do
     %Task{
       id: nil,
@@ -17,6 +17,7 @@ defmodule GeoTasks.TestDataFactory do
     }
   end
 
+  @spec gen_location() :: Task.location()
   def gen_location() do
     %{
       lon: :rand.uniform() * 360 - 180,
@@ -24,6 +25,7 @@ defmodule GeoTasks.TestDataFactory do
     }
   end
 
+  @spec gen_new_user(User.role()) :: User.t()
   def gen_new_user(role \\ :driver) do
     %User{
       name: UUID.uuid1(),
