@@ -6,6 +6,8 @@ defmodule GeoTasks.TaskManagerTest do
   alias GeoTasks.TestDataFactory
   alias GeoTasks.UserStorage
 
+  require Logger
+
   setup do
     cleanup_data()
 
@@ -171,6 +173,27 @@ defmodule GeoTasks.TaskManagerTest do
     {:ok, completed_task} = TaskManager.complete(assigned_task, driver)
 
     assert {:error, :invalid_task_status} == TaskManager.assign(completed_task, driver)
+  end
+
+  test "multiple users trying to get a task assigned" do
+    task =
+      :manager
+      |> create_user!()
+      |> create_task!()
+
+    stream_opts = [
+      timeout: 10_000,
+      max_concurrency: 200,
+      ordered: false
+    ]
+
+    results =
+      1..100
+      |> Enum.map(fn _ -> create_user!(:driver) end)
+      |> Task.async_stream(&TaskManager.assign(task, &1), stream_opts)
+      |> Enum.map(fn {:ok, result} -> result end)
+
+    assert results |> Enum.count(fn result -> elem(result, 0) == :ok end) == 1
   end
 
   defp create_user!(role) when role in [:driver, :manager] do

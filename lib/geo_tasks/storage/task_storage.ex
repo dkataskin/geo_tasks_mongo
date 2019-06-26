@@ -97,6 +97,7 @@ defmodule GeoTasks.TaskStorage do
     MongoDB.find_one_and_update(@coll, filter, update, opts)
   end
 
+  @spec set_status(Task.t(), :assigned, BSON.ObjectId.t()) :: single_task_result()
   def set_status(%Task{} = task, :assigned, %BSON.ObjectId{} = user_id) do
     updates = %{
       status: :assigned,
@@ -108,6 +109,7 @@ defmodule GeoTasks.TaskStorage do
     update(task, updates)
   end
 
+  @spec set_status(Task.t(), :completed, BSON.ObjectId.t()) :: single_task_result()
   def set_status(%Task{} = task, :completed) do
     updates = %{
       status: :completed,

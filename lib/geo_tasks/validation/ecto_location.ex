@@ -5,25 +5,34 @@ defmodule GeoTasks.EctoLocation do
 
   alias GeoTasks.Task
 
+  @spec type() :: atom()
   def type(), do: :string
 
+  @spec cast(String.t()) :: {:ok, Task.location()}
   def cast(location) when is_binary(location) do
     {:ok, parse_location(location)}
   end
 
+  @spec cast(Map.t()) :: {:ok, Task.location()}
   def cast(location) when is_map(location) do
     {:ok, parse_location(location)}
   end
 
+  @spec cast(Task.location()) :: {:ok, Task.location()}
   def cast(%{lon: _lon, lat: _lat} = location), do: {:ok, location}
 
+  @spec cast(any()) :: {:error}
   def cast(_), do: :error
 
+  @spec cast(Task.location()) :: {:ok, Task.location()}
   def load(%{lon: _lon, lat: _lat} = location) do
     {:ok, location}
   end
 
+  @spec dump(Task.location()) :: {:ok, Task.location()}
   def dump(%{lon: _lon, lat: _lat} = location), do: {:ok, location}
+
+  @spec dump(any()) :: :error
   def dump(_), do: :error
 
   @spec parse_location(nil) :: nil

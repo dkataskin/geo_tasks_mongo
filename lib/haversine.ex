@@ -6,6 +6,9 @@ defmodule GeoTasks.Haversine do
   # earh radius in km
   @r 6372.8
 
+  @type distance :: float()
+
+  @spec distance(GeoTasks.Task.location(), GeoTasks.Task.location()) :: distance()
   def distance(%{lon: lon1, lat: lat1}, %{lon: lon2, lat: lat2}) do
     dlat = :math.sin((lat2 - lat1) * @v / 2)
     dlon = :math.sin((lon2 - lon1) * @v / 2)
