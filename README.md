@@ -11,7 +11,7 @@ Implementation of the test task: https://github.com/netronixgroup/geo-tasks usin
 
 Prerequisites: Elixir 1.7, MongoDB 3.6.x
 
-1. `mix deps.get`, `mix compile`
+1. `mix deps.get`, `mix compile`, `mix test`
 2. Run MongoDB v3.6.x server and modify connection string in `dev.exs` if needed
    default value is `"mongodb://localhost:27017/geo_tasks_dev?connectTimeoutMS=10000"`. 
    The mongodb user should have rights to create indexes and collections.
@@ -258,7 +258,7 @@ Response:
 #### Assign Task
 Assigns specified task to the driver, available for roles `driver`:
 ```
-POST http://localhost:4000/api/v1/tasks/{task_id}/assign
+POST http://localhost:4000/api/v1/tasks/{task_id}/assign?token={access_token}
 ```
 
 Parameters:
@@ -293,7 +293,7 @@ Response:
 #### Complete Task
 Completes specified task, available for roles `driver`:
 ```
-POST http://localhost:4000/api/v1/tasks/{task_id}/complete
+POST http://localhost:4000/api/v1/tasks/{task_id}/complete?token={access_token}
 ```
 
 Parameters:
