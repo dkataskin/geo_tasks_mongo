@@ -41,7 +41,11 @@ defmodule GeoTasks.TaskManager do
     TaskStorage.list(location, max_distance, limit)
   end
 
-  @spec assign(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :task_already_assigned}
+  @spec assign(Task.t(), User.t()) ::
+          {:ok, Task.t()}
+          | {:error, :not_authorized}
+          | {:error, :task_already_assigned}
+          | {:error, any()}
   def assign(%Task{status: :assigned} = task, %User{} = assignee) do
     with {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
          {:same_assignee, true} <- {:same_assignee, task.assignee_id == assignee.id} do
@@ -55,11 +59,6 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec assign(Task.t(), User.t()) ::
-          {:ok, Task.t()}
-          | {:error, :not_authorized}
-          | {:error, :task_already_assigned}
-          | {:error, any()}
   def assign(%Task{status: status} = task, %User{} = assignee) do
     with {:status, :created} <- {:status, status},
          {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
@@ -84,7 +83,12 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec complete(Task.t(), User.t()) :: {:ok, Task.t()} | {:error, :not_authorized}
+  @spec complete(Task.t(), User.t()) ::
+          {:ok, Task.t()}
+          | {:error, :not_authorized}
+          | {:error, :wrong_assignee}
+          | {:error, :invalid_task_status}
+          | {:error, any()}
   def complete(%Task{status: :completed} = task, %User{} = assignee) do
     with {:authorized, true} <- {:authorized, is_allowed_assign_tasks?(assignee)},
          {:same_assignee, true} <- {:same_assignee, task.assignee_id == assignee.id} do
@@ -98,8 +102,6 @@ defmodule GeoTasks.TaskManager do
     end
   end
 
-  @spec complete(Task.t(), User.t()) ::
-          {:ok, Task.t()} | {:error, :not_authorized} | {:error, any()}
   def complete(%Task{status: status} = task, %User{} = assignee) do
     with {:status, :assigned} <- {:status, status},
          {:authorized, true} <- {:authorized, is_allowed_complete_tasks?(assignee)},

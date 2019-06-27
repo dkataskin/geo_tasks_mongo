@@ -32,7 +32,6 @@ defmodule GeoTasks.MixProject do
       {:elixir_uuid, "~> 1.2"},
       {:logger_file_backend, "~> 0.0.10"},
       {:credo, "~> 1.0.5", only: [:dev, :test], runtime: false},
-      {:retry, "~> 0.10.0"},
       {:mongodb, "~> 0.5.1"},
       {:phoenix_ecto, "~> 4.0"}
     ]

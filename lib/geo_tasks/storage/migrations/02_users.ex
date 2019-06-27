@@ -10,8 +10,8 @@ defmodule GeoTasks.Storage.Migrations.Users do
 
     def id(), do: "02.01_test_user_data_manager"
 
-    def up(instance, options) do
-      for i <- 1..20 do
+    def up(_instance, _options) do
+      for _ <- 1..20 do
         {:ok, %User{id: id}} =
           %User{
             name: UUID.uuid1(),
@@ -36,8 +36,8 @@ defmodule GeoTasks.Storage.Migrations.Users do
 
     def id(), do: "02.02_test_user_data_driver"
 
-    def up(instance, options) do
-      for i <- 1..100 do
+    def up(_instance, _options) do
+      for _ <- 1..100 do
         {:ok, %User{id: id}} =
           %User{
             name: UUID.uuid1(),

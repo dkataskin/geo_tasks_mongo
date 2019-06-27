@@ -97,7 +97,7 @@ defmodule GeoTasks.TaskStorage do
     MongoDB.find_one_and_update(@coll, filter, update, opts)
   end
 
-  @spec set_status(Task.t(), :assigned, BSON.ObjectId.t()) :: single_task_result()
+  @spec set_status(Task.t(), Task.status(), BSON.ObjectId.t()) :: single_task_result()
   def set_status(%Task{} = task, :assigned, %BSON.ObjectId{} = user_id) do
     updates = %{
       status: :assigned,
@@ -109,7 +109,6 @@ defmodule GeoTasks.TaskStorage do
     update(task, updates)
   end
 
-  @spec set_status(Task.t(), :completed, BSON.ObjectId.t()) :: single_task_result()
   def set_status(%Task{} = task, :completed) do
     updates = %{
       status: :completed,
@@ -120,7 +119,7 @@ defmodule GeoTasks.TaskStorage do
     update(task, updates)
   end
 
-  @spec map_to_db(Task.t()) :: BSON.document()
+  @spec map_to_db(nil | Task.t()) :: nil | BSON.document()
   defp map_to_db(%Task{id: id, ver: ver} = task) do
     %{
       "external_id" => task.external_id,
@@ -137,10 +136,9 @@ defmodule GeoTasks.TaskStorage do
     |> map_id!(id)
   end
 
-  @spec map_to_db(nil) :: nil
   defp map_from_db(nil), do: nil
 
-  @spec map_to_db(BSON.document()) :: Task.t()
+  @spec map_from_db(BSON.document()) :: Task.t()
   defp map_from_db(%{"_id" => id, "ver" => ver} = doc) do
     %Task{
       id: id,
@@ -156,10 +154,9 @@ defmodule GeoTasks.TaskStorage do
     }
   end
 
-  @spec map_location_to_db(nil) :: nil
+  @spec map_location_to_db(nil | Task.location()) :: nil | BSON.document()
   defp map_location_to_db(nil), do: nil
 
-  @spec map_location_to_db(Task.location()) :: BSON.document()
   defp map_location_to_db(%{lon: lon, lat: lat}) do
     %{
       "type" => "Point",
@@ -167,10 +164,9 @@ defmodule GeoTasks.TaskStorage do
     }
   end
 
-  @spec map_location_from_db(nil) :: nil
+  @spec map_location_from_db(nil | BSON.document()) :: nil | Task.location()
   defp map_location_from_db(nil), do: nil
 
-  @spec map_location_from_db(BSON.document()) :: Task.location()
   defp map_location_from_db(%{"type" => "Point", "coordinates" => [lon, lat]}) do
     %{
       lon: lon,

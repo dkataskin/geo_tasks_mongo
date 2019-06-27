@@ -69,6 +69,12 @@ defmodule GeoTasksWeb.TaskController do
         |> put_view(ErrorView)
         |> render("400.json", errors: %{task_id: "another task has been already assigned"})
 
+      {:error, :invalid_task_status} ->
+        conn
+        |> put_status(:bad_request)
+        |> put_view(ErrorView)
+        |> render("400.json", errors: %{task_id: "only task in status 'created' can be assigned"})
+
       {:error, :task_already_assigned} ->
         conn
         |> put_status(:bad_request)
@@ -158,6 +164,6 @@ defmodule GeoTasksWeb.TaskController do
   end
 
   defp make_authz_error(required_role, action) do
-    %{token: "only user with role \"#{required_role}\" can #{action} tasks"}
+    %{token: "only user with role '#{required_role}' can #{action} tasks"}
   end
 end

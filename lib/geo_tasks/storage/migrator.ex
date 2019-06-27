@@ -5,6 +5,7 @@ defmodule GeoTasks.Storage.Migrator do
 
   @migration_coll "__migrations"
 
+  @spec up(atom(), Keyword.t()) :: :ok | {:error, any()}
   def up(instance, options) do
     {:ok, :ensured} = ensure_collection_exists(instance, options)
     {:ok, :ensured} = ensure_collection_indexes(instance, options)
@@ -34,10 +35,12 @@ defmodule GeoTasks.Storage.Migrator do
     end
   end
 
+  @spec safe_drop_result({:ok, any() | {:error, any()}}) :: :ok | {:error, any()}
   def safe_drop_result({:ok, _}), do: :ok
   def safe_drop_result({:error, %Mongo.Error{code: 26}}), do: :ok
   def safe_drop_result({:error, error}), do: {:error, error}
 
+  @spec get_migration_mods() :: [module()]
   defp get_migration_mods() do
     {:ok, list} = :application.get_key(:geo_tasks, :modules)
 
@@ -50,6 +53,7 @@ defmodule GeoTasks.Storage.Migrator do
     end)
   end
 
+  @spec ensure_collection_exists(atom(), Keyword.t()) :: {:ok, :ensured} | {:error, any()}
   defp ensure_collection_exists(instance, options) do
     case Mongo.command(instance, %{create: @migration_coll}, options) do
       {:ok, _} ->
@@ -63,6 +67,7 @@ defmodule GeoTasks.Storage.Migrator do
     end
   end
 
+  @spec ensure_collection_indexes(atom(), Keyword.t()) :: {:ok, :ensured} | {:error, any()}
   defp ensure_collection_indexes(instance, options) do
     query = %{
       createIndexes: @migration_coll,
@@ -76,6 +81,7 @@ defmodule GeoTasks.Storage.Migrator do
     end
   end
 
+  @spec filter_applied([String.t()], atom(), Keyword.t()) :: [String.t()]
   defp filter_applied(migration_ids, instance, options) do
     applied_list =
       instance
@@ -87,6 +93,7 @@ defmodule GeoTasks.Storage.Migrator do
     |> Enum.filter(&(&1 not in applied_list))
   end
 
+  @spec mark_applied(String.t(), atom(), Keyword.t()) :: {:ok, :marked}
   defp mark_applied(migration_id, instance, options) do
     doc = %{"id" => migration_id, "when" => DateTime.utc_now()}
     {:ok, _} = Mongo.insert_one(instance, @migration_coll, doc, options)

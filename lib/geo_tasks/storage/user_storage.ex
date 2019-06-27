@@ -104,10 +104,9 @@ defmodule GeoTasks.UserStorage do
     |> map_id!(id)
   end
 
-  @spec map_from_db(nil) :: nil
+  @spec map_from_db(nil | BSON.document()) :: nil | User.t()
   defp map_from_db(nil), do: nil
 
-  @spec map_from_db(BSON.document()) :: User.t()
   defp map_from_db(%{"_id" => id, "name" => name, "role" => role, "created_at" => created_at}) do
     %User{
       id: id,

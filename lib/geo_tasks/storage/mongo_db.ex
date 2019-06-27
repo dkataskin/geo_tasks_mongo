@@ -66,22 +66,14 @@ defmodule GeoTasks.MongoDB do
     )
   end
 
-  def update_one(collection, filter, update, opts) do
-    Mongo.update_one(@topology, collection, filter, update, Keyword.merge(opts, @mongo_opts))
-  end
-
-  def update_many(collection, filter, update, opts) do
-    Mongo.update_many(@topology, collection, filter, update, Keyword.merge(opts, @mongo_opts))
-  end
-
-  def delete_one(collection, filter, opts) do
-    Mongo.delete_one(@topology, collection, filter, Keyword.merge(opts, @mongo_opts))
-  end
-
+  @spec delete_many(Mongo.collection(), BSON.document()) ::
+          {:ok, Mongo.DeleteResult.t()} | {:error, any()}
   def delete_many(collection, filter) do
     Mongo.delete_many(@topology, collection, filter, @mongo_opts)
   end
 
+  @spec find(Mongo.collection(), BSON.document(), Keyword.t()) ::
+          Mongo.Cursor.t() | {:error, any()}
   def find(collection, filter, opts) do
     map_fn = opts[:map_fn] || fn db_item -> db_item end
 
@@ -91,18 +83,19 @@ defmodule GeoTasks.MongoDB do
     end
   end
 
-  def distinct(collection, field, filter, opts) do
-    Mongo.distinct(@topology, collection, field, filter, Keyword.merge(opts, @mongo_opts))
-  end
-
+  @spec aggregate(Mongo.collection(), BSON.document(), Keyword.t()) ::
+          Mongo.Cursor.t() | {:error, any()}
   def aggregate(collection, query, opts \\ [return_document: :after]) do
     Mongo.aggregate(@topology, collection, query, Keyword.merge(opts, @mongo_opts))
   end
 
+  @spec count(Mongo.collection(), BSON.document(), Keyword.t()) ::
+          {:ok, non_neg_integer()} | {:error, any()}
   def count(collection, filter, opts \\ []) do
     Mongo.count(@topology, collection, filter, Keyword.merge(opts, @mongo_opts))
   end
 
+  @spec explain_error(Mongo.Error.t()) :: atom() | Mongo.Error.t()
   def explain_error(%Mongo.Error{code: 11_000}), do: :duplicate_key_error
   def explain_error(error), do: error
 end
